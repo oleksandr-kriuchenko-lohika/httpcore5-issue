@@ -3,7 +3,7 @@ Reproduces an issue when apache http client hangs forever if a connection reset 
 asynchronous request execution.
 
 ## How to reproduce the issue
-Run test ApacheHttpClient5TransportIT.connectionResetIsHandledSuccessfully
+Run single test `ApacheHttpClient5TransportIT.connectionResetIsHandledSuccessfully`
 
 ## Expected behavior
 Test passes successfully
@@ -12,5 +12,6 @@ Test passes successfully
 Test execution hangs forever
 
 ## Observations
-Network traffic shows that mock server closes a connection immediately, however the future 
+- If both tests of the test suits are run the issue doesn't reproduce and all tests complete successfully
+- Network traffic shows that mock server closes a connection immediately, however the future 
 returned by `CloseableHttpAsyncClient.execute()` never completes.
