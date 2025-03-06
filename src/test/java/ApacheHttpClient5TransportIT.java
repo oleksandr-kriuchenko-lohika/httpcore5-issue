@@ -10,11 +10,14 @@ import org.apache.hc.client5.http.async.methods.SimpleHttpResponse;
 import org.apache.hc.client5.http.async.methods.SimpleRequestBuilder;
 import org.apache.hc.client5.http.async.methods.SimpleRequestProducer;
 import org.apache.hc.client5.http.async.methods.SimpleResponseConsumer;
+import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
 import org.apache.hc.client5.http.impl.async.HttpAsyncClients;
+import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManagerBuilder;
 import org.apache.hc.core5.concurrent.FutureCallback;
 import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.http.message.StatusLine;
+import org.apache.hc.core5.util.Timeout;
 import org.junit.Test;
 import org.mockserver.configuration.ConfigurationProperties;
 import org.mockserver.integration.ClientAndServer;
@@ -24,7 +27,13 @@ import org.mockserver.model.HttpError;
 public class ApacheHttpClient5TransportIT {
 
   private CloseableHttpAsyncClient buildClient() {
-    return HttpAsyncClients.createDefault();
+    return HttpAsyncClients.custom()
+        .setConnectionManager(PoolingAsyncClientConnectionManagerBuilder.create()
+            .setDefaultConnectionConfig(ConnectionConfig.custom()
+                .setConnectTimeout(Timeout.ofSeconds(15))
+                .build())
+            .build())
+        .build();
   }
 
   private CloseableHttpAsyncClient getHttpClient() throws IOException {
