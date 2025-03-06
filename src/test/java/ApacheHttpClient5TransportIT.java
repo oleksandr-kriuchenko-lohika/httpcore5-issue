@@ -5,7 +5,6 @@ import static org.mockserver.model.HttpRequest.request;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.function.Function;
 import org.apache.hc.client5.http.async.methods.SimpleHttpRequest;
 import org.apache.hc.client5.http.async.methods.SimpleHttpResponse;
 import org.apache.hc.client5.http.async.methods.SimpleRequestBuilder;
@@ -77,6 +76,9 @@ public class ApacheHttpClient5TransportIT {
     return mockServer;
   }
 
+  /**
+   * Using this client setup regular request executes successfully
+   */
   @Test
   public void regularRequestExecutesSuccessfully()
       throws IOException, ExecutionException, InterruptedException {
@@ -88,7 +90,25 @@ public class ApacheHttpClient5TransportIT {
   }
 
   /**
+   * Using same client setup request through mock server either executes successfully
+   */
+  @Test
+  public void mockServerRequestExecutesSuccessfully()
+      throws IOException, ExecutionException, InterruptedException {
+    ClientAndServer dbMockServer = createProxyMockServer("httpbin.org", 80, 1080);
+
+    CloseableHttpAsyncClient httpClient = getHttpClient();
+    Future<SimpleHttpResponse> future = sendRequest(httpClient, "localhost", 1080, "/");
+    SimpleHttpResponse response = future.get();
+    assertEquals("Response status code is 200", 200, response.getCode());
+    httpClient.close();
+  }
+
+  /**
    * This test never completes
+   *
+   * Using same client setup request through mock server never completes when mock server drops a
+   * connection.
    */
   @Test
   public void connectionResetIsHandledSuccessfully()
