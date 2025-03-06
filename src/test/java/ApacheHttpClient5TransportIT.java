@@ -99,7 +99,7 @@ public class ApacheHttpClient5TransportIT {
         .error(HttpError.error().withDropConnection(true));
 
     CloseableHttpAsyncClient httpClient = getHttpClient();
-    Future<SimpleHttpResponse> future = sendRequest(httpClient, "httpbin.org", 1080, "/");
+    Future<SimpleHttpResponse> future = sendRequest(httpClient, "localhost", 1080, "/");
     assertThrows(ExecutionException.class, future::get);
     httpClient.close();
   }
