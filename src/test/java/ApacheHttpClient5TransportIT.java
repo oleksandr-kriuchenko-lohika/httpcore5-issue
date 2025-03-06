@@ -28,45 +28,44 @@ public class ApacheHttpClient5TransportIT {
     return HttpAsyncClients.createDefault();
   }
 
-  private <R> R withHttpClient(Function<CloseableHttpAsyncClient, R> f)
-      throws IOException {
-    try (CloseableHttpAsyncClient httpclient = buildClient()) {
-      httpclient.start();
-      return f.apply(httpclient);
-    }
+  private CloseableHttpAsyncClient getHttpClient() throws IOException {
+    CloseableHttpAsyncClient httpClient = buildClient();
+    httpClient.start();
+    return httpClient;
   }
 
-  private Future<SimpleHttpResponse> sendRequest(String host, int port, String path)
+  private Future<SimpleHttpResponse> sendRequest(
+      CloseableHttpAsyncClient httpClient,
+      String host, int port,
+      String path)
       throws IOException {
-    return withHttpClient(httpClient -> {
-      final HttpHost target = new HttpHost(host, port);
-      final SimpleHttpRequest request = SimpleRequestBuilder.get()
-          .setHttpHost(target)
-          .setPath(path)
-          .build();
-      return httpClient.execute(
-          SimpleRequestProducer.create(request),
-          SimpleResponseConsumer.create(),
-          new FutureCallback<SimpleHttpResponse>() {
+    final HttpHost target = new HttpHost(host, port);
+    final SimpleHttpRequest request = SimpleRequestBuilder.get()
+        .setHttpHost(target)
+        .setPath(path)
+        .build();
+    return httpClient.execute(
+        SimpleRequestProducer.create(request),
+        SimpleResponseConsumer.create(),
+        new FutureCallback<SimpleHttpResponse>() {
 
-            @Override
-            public void completed(final SimpleHttpResponse response) {
-              System.out.println(request + "->" + new StatusLine(response));
-              System.out.println(response.getBody());
-            }
+          @Override
+          public void completed(final SimpleHttpResponse response) {
+            System.out.println(request + "->" + new StatusLine(response));
+            System.out.println(response.getBody());
+          }
 
-            @Override
-            public void failed(final Exception ex) {
-              System.out.println(request + "->" + ex);
-            }
+          @Override
+          public void failed(final Exception ex) {
+            System.out.println(request + "->" + ex);
+          }
 
-            @Override
-            public void cancelled() {
-              System.out.println(request + " cancelled");
-            }
+          @Override
+          public void cancelled() {
+            System.out.println(request + " cancelled");
+          }
 
-          });
-    });
+        });
   }
 
   private ClientAndServer createProxyMockServer(
@@ -81,13 +80,15 @@ public class ApacheHttpClient5TransportIT {
   @Test
   public void regularRequestExecutesSuccessfully()
       throws IOException, ExecutionException, InterruptedException {
-    Future<SimpleHttpResponse> future = sendRequest("httpbin.org", 80, "/");
+    CloseableHttpAsyncClient httpClient = getHttpClient();
+    Future<SimpleHttpResponse> future = sendRequest(httpClient, "httpbin.org", 80, "/");
     SimpleHttpResponse response = future.get();
     assertEquals("Response status code is 200", 200, response.getCode());
+    httpClient.close();
   }
 
   /**
-   * If this test is run alone then execution hangs forever. Otherwise, it passes successfully.
+   * This test never completes
    */
   @Test
   public void connectionResetIsHandledSuccessfully()
@@ -97,7 +98,9 @@ public class ApacheHttpClient5TransportIT {
         .when(request(), Times.unlimited())
         .error(HttpError.error().withDropConnection(true));
 
-    Future<SimpleHttpResponse> future = sendRequest("httpbin.org", 1080, "/");
+    CloseableHttpAsyncClient httpClient = getHttpClient();
+    Future<SimpleHttpResponse> future = sendRequest(httpClient, "httpbin.org", 1080, "/");
     assertThrows(ExecutionException.class, future::get);
+    httpClient.close();
   }
 }

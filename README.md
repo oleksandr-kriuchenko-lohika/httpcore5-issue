@@ -11,7 +11,10 @@ Test passes successfully
 ## Actual behavior
 Test execution hangs forever
 
+## Test description
+- ApacheHttpClient5TransportIT.regularRequestExecutesSuccessfully - successfully completes a test request
+- ApacheHttpClient5TransportIT.connectionResetIsHandledSuccessfully - hangs forever for same request as connection is closed by server
+
 ## Observations
-- If both tests of the test suits are run the issue doesn't reproduce and all tests complete successfully
 - Network traffic shows that mock server closes a connection immediately, however the future 
 returned by `CloseableHttpAsyncClient.execute()` never completes.
