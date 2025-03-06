@@ -1,0 +1,15 @@
+<Configuration>
+  <Appenders>
+    <Console name="Console">
+      <PatternLayout pattern="%d %-5level [%logger] %msg%n%xThrowable" />
+    </Console>
+  </Appenders>
+  <Loggers>
+    <Logger name="org.apache.hc.client5.http" level="TRACE">
+      <AppenderRef ref="Console"/>
+    </Logger>
+    <Root level="TRACE">
+      <AppenderRef ref="Console" />
+    </Root>
+  </Loggers>
+</Configuration>
